@@ -137,8 +137,7 @@ char TxData[32];
 volatile int32_t Socket;
 uint16_t Datalen;
 int32_t ret;
-uint32_t lastScanTime;
-uint8_t lastScanType;
+uint8_t isStoring;
 volatile uint8_t flag;
 int expectedItemCount;
 uint8_t status;
@@ -191,8 +190,7 @@ int main(void)
   uint8_t  IP_Addr[4] = {0};
   Socket = -1;
   int16_t Trials = CONNECTION_TRIAL_MAX;
-  lastScanTime=0;
-  lastScanType=0;
+  isStoring=0;
   flag=0;
   /* USER CODE END 1 */
 
@@ -224,70 +222,70 @@ int main(void)
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
   // Init Wifi module
-//  if(WIFI_Init() ==  WIFI_STATUS_OK)
-//    {
-//      printf("> WIFI Module Initialized.\n");
-//      if(WIFI_GetMAC_Address(MAC_Addr, sizeof(MAC_Addr)) == WIFI_STATUS_OK)
-//      {
-//        printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
-//                 MAC_Addr[0],
-//                 MAC_Addr[1],
-//                 MAC_Addr[2],
-//                 MAC_Addr[3],
-//                 MAC_Addr[4],
-//                 MAC_Addr[5]);
-//      }
-//      else
-//      {
-//        printf("> ERROR : CANNOT get MAC address\n");
-//      }
-//
-//      if( WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK)
-//      {
-//        printf("> es-wifi module connected \n");
-//        if(WIFI_GetIP_Address(IP_Addr, sizeof(IP_Addr)) == WIFI_STATUS_OK)
-//        {
-//          printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
-//                 IP_Addr[0],
-//                 IP_Addr[1],
-//                 IP_Addr[2],
-//                 IP_Addr[3]);
-//
-//          printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
-//                 RemoteIP[0],
-//                 RemoteIP[1],
-//                 RemoteIP[2],
-//                 RemoteIP[3],
-//  							 RemotePORT);
-//
-//          while (Trials--)
-//          {
-//            if( WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", RemoteIP, RemotePORT, 0) == WIFI_STATUS_OK)
-//            {
-//              printf("> TCP Connection opened successfully.\n");
-//              Socket = 0;
-//              break;
-//            }
-//          }
-//          if(Socket == -1)
-//          {
-//            printf("> ERROR : Cannot open Connection\n");
-//          }
-//        }
-//        else
-//        {
-//          printf("> ERROR : es-wifi module CANNOT get IP address\n");
-//        }
-//      }
-//      else
-//      {
-//        printf("> ERROR : es-wifi module NOT connected\n");
-//      }
-//    }
-//    else
-//    {
-//      printf("> ERROR : WIFI Module cannot be initialized.\n");
-//    }
+  if(WIFI_Init() ==  WIFI_STATUS_OK)
+    {
+      printf("> WIFI Module Initialized.\n");
+      if(WIFI_GetMAC_Address(MAC_Addr, sizeof(MAC_Addr)) == WIFI_STATUS_OK)
+      {
+        printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
+                 MAC_Addr[0],
+                 MAC_Addr[1],
+                 MAC_Addr[2],
+                 MAC_Addr[3],
+                 MAC_Addr[4],
+                 MAC_Addr[5]);
+      }
+      else
+      {
+        printf("> ERROR : CANNOT get MAC address\n");
+      }
+
+      if( WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK)
+      {
+        printf("> es-wifi module connected \n");
+        if(WIFI_GetIP_Address(IP_Addr, sizeof(IP_Addr)) == WIFI_STATUS_OK)
+        {
+          printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
+                 IP_Addr[0],
+                 IP_Addr[1],
+                 IP_Addr[2],
+                 IP_Addr[3]);
+
+          printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
+                 RemoteIP[0],
+                 RemoteIP[1],
+                 RemoteIP[2],
+                 RemoteIP[3],
+  							 RemotePORT);
+
+          while (Trials--)
+          {
+            if( WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL, "TCP_CLIENT", RemoteIP, RemotePORT, 0) == WIFI_STATUS_OK)
+            {
+              printf("> TCP Connection opened successfully.\n");
+              Socket = 0;
+              break;
+            }
+          }
+          if(Socket == -1)
+          {
+            printf("> ERROR : Cannot open Connection\n");
+          }
+        }
+        else
+        {
+          printf("> ERROR : es-wifi module CANNOT get IP address\n");
+        }
+      }
+      else
+      {
+        printf("> ERROR : es-wifi module NOT connected\n");
+      }
+    }
+    else
+    {
+      printf("> ERROR : WIFI Module cannot be initialized.\n");
+    }
   MFRC522_Init();
   printf("rc522 init\n");
     uchar ver = Read_MFRC522(0x37);  // VersionReg
@@ -1048,6 +1046,7 @@ void StartStoringTask(void *argument)
 	  printf("start storing\n");
 	  //scanning
 	  flag=1;
+	  isStoring=1;
 	  StartStoringProcess();
 	  //sending data
 	  //tracking time
@@ -1096,6 +1095,7 @@ void storingStopTaskFunc(void *argument)
 	  osDelay(1000*TIME_TO_C);
 	  printf("delay end\n");
 	  flag=0;
+	  isStoring=0;
 	  osSemaphoreRelease(taskSemHandle);
   }
   /* USER CODE END storingStopTaskFunc */
@@ -1114,7 +1114,7 @@ void receiveWIFITask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  if(Socket != -1)
+	  if(Socket != -1&&isStoring==1)
 	  {
 		if (osMutexAcquire(WIFIsocketHandle, 100) == osOK)  // 最多等 100ms
 		{
