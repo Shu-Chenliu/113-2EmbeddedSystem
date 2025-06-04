@@ -137,7 +137,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 90);
+	  Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 0);
 	  HAL_Delay(1000);
 	  Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 0);
 	  HAL_Delay(1000);

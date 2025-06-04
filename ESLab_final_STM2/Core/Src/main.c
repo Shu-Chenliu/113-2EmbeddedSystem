@@ -267,8 +267,8 @@ int main(void)
 					  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 					  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 					  // 設定占空比（範圍要 <= Period）
-					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 400); // 50% duty cycle，如果 Period 是 999
-					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 400);
+					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 500); // 50% duty cycle，如果 Period 是 999
+					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 500);
 				}
 
 			  }
@@ -285,16 +285,21 @@ int main(void)
 					case 'A':
 						printf("A\n");
 						HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-						Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 90);
+						Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 10);
+						HAL_Delay(3000);
+						HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+						Set_Servo_Angle(&htim3, TIM_CHANNEL_4, 0);
 						HAL_Delay(TIME_TO_A);
 					  // 處理 storing A
 					  break;
 					case 'B':
-						printf("B\n");
 						HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-						Set_Servo_Angle(&htim3, TIM_CHANNEL_4, 90);
+						Set_Servo_Angle(&htim3, TIM_CHANNEL_4, 80);
+						printf("B\n");
+						HAL_Delay(3000);
 						HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-						Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 0);
+						Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 85);
+
 						HAL_Delay(TIME_TO_B);
 					  // 處理 storing B
 					  break;
@@ -303,7 +308,7 @@ int main(void)
 						HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 						Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 0);
 						HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-						Set_Servo_Angle(&htim3, TIM_CHANNEL_4, 0);
+						Set_Servo_Angle(&htim3, TIM_CHANNEL_4, 80);
 						HAL_Delay(TIME_TO_C);
 					  // 處理 storing C
 					  break;
@@ -314,7 +319,7 @@ int main(void)
 				}
 			  }
 			  // Case 3: deposit: <number>
-			  else if (strncmp((char *)RxData, "deposit: ", 9) == 0)
+			  else if (strncmp((char *)RxData, "start out: ", 9) == 0)
 			  {
 				  printf("deposit\n");
 				  if(state==0){
@@ -330,8 +335,8 @@ int main(void)
 					  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 					  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 					  // 設定占空比（範圍要 <= Period）
-					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 400); // 50% duty cycle，如果 Period 是 999
-					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 400);
+					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 500); // 50% duty cycle，如果 Period 是 999
+					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 500);
 				}
 
 			  }
