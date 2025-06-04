@@ -141,7 +141,7 @@ int main(void)
   while (1)
   {
 	  	status = MFRC522_Request(PICC_REQIDL, str);
-	  	printf("status:%d\n",status);
+//	  	printf("status:%d\n",status);
 		if (status == MI_OK)
 		{
 			printf("Card detected\n");

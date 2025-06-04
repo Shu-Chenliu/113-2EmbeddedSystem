@@ -81,13 +81,12 @@ int __io_putchar(int ch)
 	HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFF);
 	return ch;
 }
-int angle_to_ccr(float angle_deg) {
-    if (angle_deg > 180) angle_deg = 180;
-    if (angle_deg < 0) angle_deg = 0;
-
-    int ccr_val = (int)(25 + (angle_deg *100/180));  // maps to 50~100
-    printf("angle = %d, CCR = %d\n", (int)angle_deg, ccr_val);
-    return ccr_val;
+void Set_Servo_Angle(TIM_HandleTypeDef *htim, uint32_t channel, uint8_t angle)
+{
+    // Map angle (0-180) to pulse width (210-1050 counts)
+    //210 for 0.5ms (0 degrees) and 1050 for 2.5ms (180 degrees)
+    uint32_t pulse_length = 25 + (angle * (100) / 180);
+    __HAL_TIM_SET_COMPARE(htim, channel, pulse_length);
 }
 
 /* USER CODE END 0 */
@@ -138,14 +137,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  htim3.Instance->CCR1=25;
-	  HAL_Delay(5000);
-	  printf("75\n");
-	  htim3.Instance->CCR1=75;
-	  HAL_Delay(5000);
-	  printf("125\n");
-	  htim3.Instance->CCR1=125;
-	  HAL_Delay(5000);
+	  Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 90);
+	  HAL_Delay(1000);
+	  Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 0);
+	  HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

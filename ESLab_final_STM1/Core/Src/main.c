@@ -38,7 +38,7 @@
 #define SSID     "ShuCheniPhone"
 #define PASSWORD "11111111"
 
-uint8_t RemoteIP[] = {172,20,10,1};//{192,168,50,58};//{192,168,50,57};//{172,27,187,63};//{192,168,3,110};
+uint8_t RemoteIP[] = {172,20,10,4};//{192,168,50,58};//{192,168,50,57};//{172,27,187,63};//{192,168,3,110};
 #define RemotePORT	8002
 
 #define WIFI_WRITE_TIMEOUT 10000
@@ -96,14 +96,14 @@ osThreadId_t storingStopTaskHandle;
 const osThreadAttr_t storingStopTask_attributes = {
   .name = "storingStopTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* Definitions for receiveWIFI */
 osThreadId_t receiveWIFIHandle;
 const osThreadAttr_t receiveWIFI_attributes = {
   .name = "receiveWIFI",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityBelowNormal,
 };
 /* Definitions for WIFIsocket */
 osMutexId_t WIFIsocketHandle;
@@ -190,7 +190,6 @@ int main(void)
   uint8_t  IP_Addr[4] = {0};
   Socket = -1;
   int16_t Trials = CONNECTION_TRIAL_MAX;
-  isStoring=0;
   flag=0;
   /* USER CODE END 1 */
 
@@ -933,7 +932,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		{
 			printf("stopping\n");
 			osSemaphoreRelease(storeStopHandle);
-
+			printf("released\n");
 			//StopStoringProcess();
 		}
 		break;
@@ -949,43 +948,40 @@ void SPI3_IRQHandler(void)
   HAL_SPI_IRQHandler(&hspi);
 }
 void StartStoringProcess(void){
-	while(flag==1){
-		status = MFRC522_Request(PICC_REQIDL, str);
-		printf("status:%d\n",status);
+	status = MFRC522_Request(PICC_REQIDL, str);
+	printf("status:%d\n",status);
+	if (status == MI_OK)
+	{
+		printf("Card detected\n");
+
+		status = MFRC522_Anticoll(str);
 		if (status == MI_OK)
 		{
-		    printf("Card detected\n");
-
-		    status = MFRC522_Anticoll(str);
-		    if (status == MI_OK)
-		    {
-		        memcpy(sNum, str, 5);
+			memcpy(sNum, str, 5);
 //		        lastScanTime=HAL_GetTick();
-		        printf("Card UID: %02X %02X %02X %02X %02X\n",
-		               sNum[0], sNum[1], sNum[2], sNum[3], sNum[4]);
-		        sprintf(TxData, "%02X %02X %02X %02X %02X\n",
-		                sNum[0], sNum[1], sNum[2], sNum[3], sNum[4]);
+			printf("Card UID: %02X %02X %02X %02X %02X\n",
+				   sNum[0], sNum[1], sNum[2], sNum[3], sNum[4]);
+			sprintf(TxData, "%02X %02X %02X %02X %02X\n",
+					sNum[0], sNum[1], sNum[2], sNum[3], sNum[4]);
 
-		        if (osMutexAcquire(WIFIsocketHandle, 1000) == osOK) // 最多等 1 秒
+			if (osMutexAcquire(WIFIsocketHandle, 1000) == osOK) // 最多等 1 秒
+			{
+				ret = WIFI_SendData(Socket, (const uint8_t *)TxData, strlen(TxData), &Datalen, WIFI_WRITE_TIMEOUT);
+				osMutexRelease(WIFIsocketHandle);
+
+				if (ret != WIFI_STATUS_OK)
 				{
-					ret = WIFI_SendData(Socket, (const uint8_t *)TxData, strlen(TxData), &Datalen, WIFI_WRITE_TIMEOUT);
-					osMutexRelease(WIFIsocketHandle);
-
-					if (ret != WIFI_STATUS_OK)
-					{
-						printf("> ERROR : Failed to Send Data, connection closed\n");
-						break;
-					}
+					printf("> ERROR : Failed to Send Data, connection closed\n");
 				}
-				else
-				{
-					printf("Socket busy, send skipped.\n");
-				}
+			}
+			else
+			{
+				printf("Socket busy, send skipped.\n");
+			}
 
-		    }
 		}
-		osDelay(100);
 	}
+	osDelay(100);
 }
 void StartDepositProcess(){
 	int count=0;
@@ -1046,8 +1042,15 @@ void StartStoringTask(void *argument)
 	  printf("start storing\n");
 	  //scanning
 	  flag=1;
-	  isStoring=1;
-	  StartStoringProcess();
+	  while(flag == 1)
+	  {
+		  StartStoringProcess();  // 做一次掃描
+		  osDelay(100);               // 留時間給別人執行
+	  }
+	  printf("storing stopped\n");
+
+	  // 釋放 taskSemHandle 讓其他任務能繼續
+	  osSemaphoreRelease(taskSemHandle);
 	  //sending data
 	  //tracking time
   }
@@ -1095,7 +1098,6 @@ void storingStopTaskFunc(void *argument)
 	  osDelay(1000*TIME_TO_C);
 	  printf("delay end\n");
 	  flag=0;
-	  isStoring=0;
 	  osSemaphoreRelease(taskSemHandle);
   }
   /* USER CODE END storingStopTaskFunc */
@@ -1114,7 +1116,7 @@ void receiveWIFITask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  if(Socket != -1&&isStoring==1)
+	  if(Socket != -1&&flag==0)
 	  {
 		if (osMutexAcquire(WIFIsocketHandle, 100) == osOK)  // 最多等 100ms
 		{
@@ -1140,6 +1142,7 @@ void receiveWIFITask(void *argument)
 		  osDelay(10);
 		}
 	  }
+	  osDelay(10);
   }
   /* USER CODE END receiveWIFITask */
 }
