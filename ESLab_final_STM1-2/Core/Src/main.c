@@ -867,9 +867,7 @@ void StartStoringProcess(void){
 	uint32_t startTime=HAL_GetTick();
 	while(flag==1){
 		status = MFRC522_Request(PICC_REQIDL, str);
-		printf("status:%d\n",status);
-		if(HAL_GetTick()-startTime>=TIME_TO_A*1000){
-			printf("ok\n");
+		if(HAL_GetTick()-startTime>=5000){
 			HAL_GPIO_WritePin(GPIOA,REDLED_Pin,GPIO_PIN_RESET);
 			HAL_GPIO_WritePin(GPIOA,GREENLED_Pin,GPIO_PIN_SET);
 		}
@@ -900,7 +898,7 @@ void StartStoringProcess(void){
 }
 void extendStoring(void){
 	uint32_t startTime=HAL_GetTick();
-	while(HAL_GetTick()-startTime<TIME_TO_C*1000){
+	while(HAL_GetTick()-startTime<10*1000){
 		status = MFRC522_Request(PICC_REQIDL, str);
 		printf("status:%d\n",status);
 		if (status == MI_OK)
