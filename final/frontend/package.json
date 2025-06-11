@@ -1,0 +1,48 @@
+{
+  "name": "iot",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
+    "@mapbox/search-js-react": "^1.0.0-beta.24",
+    "@mui/icons-material": "^6.2.0",
+    "@mui/material": "^6.1.10",
+    "@mui/x-data-grid": "^8.5.0",
+    "@mui/x-data-grid-generator": "^8.5.0",
+    "@mui/x-data-grid-premium": "^8.5.0",
+    "@mui/x-data-grid-pro": "^8.5.0",
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.7",
+    "dotenv-defaults": "^5.0.2",
+    "mapbox-gl": "^3.8.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-map-gl": "^7.1.7",
+    "react-router-dom": "^7.0.2",
+    "react-scripts": "^5.0.1",
+    "styled-components": "^6.1.13",
+    "web-vitals": "^4.2.4",
+    "xhr2": "^0.2.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.15.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.12.0",
+    "vite": "^6.0.3",
+    "vite-plugin-html": "^3.2.2"
+  }
+}
