@@ -37,7 +37,7 @@
 #define SSID     "ShuCheniPhone"
 #define PASSWORD "11111111"
 
-uint8_t RemoteIP[] = {172,20,10,1};//{192,168,50,58};//{192,168,50,57};//{172,27,187,63};//{192,168,3,110};
+uint8_t RemoteIP[] = {172,20,10,2};//{192,168,50,58};//{192,168,50,57};//{172,27,187,63};//{192,168,3,110};
 #define RemotePORT	8002
 
 #define WIFI_WRITE_TIMEOUT 10000
@@ -50,8 +50,8 @@ uint8_t RemoteIP[] = {172,20,10,1};//{192,168,50,58};//{192,168,50,57};//{172,27
 #else
 #define TERMOUT(...)
 #endif
-#define TIME_TO_A 10
-#define TIME_TO_B 15
+#define TIME_TO_A 3
+#define TIME_TO_B 3
 #define TIME_TO_C 15
 /* USER CODE END PD */
 
@@ -235,6 +235,12 @@ int main(void)
     {
       printf("> ERROR : WIFI Module cannot be initialized.\n");
     }
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+  Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 0);
+  Set_Servo_Angle(&htim3, TIM_CHANNEL_4, 80);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -264,11 +270,10 @@ int main(void)
 					  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);   // AIN1
 					  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET); // AIN2
 					  // 啟動 PWM（記得有先呼叫 HAL_TIM_PWM_Start）
-					  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-					  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+
 					  // 設定占空比（範圍要 <= Period）
-					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 400); // 50% duty cycle，如果 Period 是 999
-					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 400);
+					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 600); // 50% duty cycle，如果 Period 是 999
+					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 600);
 				}
 
 			  }
@@ -284,27 +289,22 @@ int main(void)
 				  {
 					case 'A':
 						printf("A\n");
-						HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-						Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 90);
-						HAL_Delay(TIME_TO_A);
+						Set_Servo_Angle(&htim3, TIM_CHANNEL_4, 0);
+						HAL_Delay(TIME_TO_A*1000);
+						Set_Servo_Angle(&htim3, TIM_CHANNEL_4, 80);
 					  // 處理 storing A
 					  break;
 					case 'B':
 						printf("B\n");
-						HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-						Set_Servo_Angle(&htim3, TIM_CHANNEL_4, 90);
-						HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+						Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 85);
+						HAL_Delay(TIME_TO_B*1000);
 						Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 0);
-						HAL_Delay(TIME_TO_B);
 					  // 處理 storing B
 					  break;
 					case 'C':
 						printf("C\n");
-						HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 						Set_Servo_Angle(&htim3, TIM_CHANNEL_1, 0);
-						HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-						Set_Servo_Angle(&htim3, TIM_CHANNEL_4, 0);
-						HAL_Delay(TIME_TO_C);
+						Set_Servo_Angle(&htim3, TIM_CHANNEL_4, 80);
 					  // 處理 storing C
 					  break;
 					default:
@@ -314,7 +314,7 @@ int main(void)
 				}
 			  }
 			  // Case 3: deposit: <number>
-			  else if (strncmp((char *)RxData, "deposit: ", 9) == 0)
+			  else if (strncmp((char *)RxData, "start out: ", 11) == 0)
 			  {
 				  printf("deposit\n");
 				  if(state==0){
@@ -330,13 +330,14 @@ int main(void)
 					  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 					  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 					  // 設定占空比（範圍要 <= Period）
-					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 400); // 50% duty cycle，如果 Period 是 999
-					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 400);
+					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 600); // 50% duty cycle，如果 Period 是 999
+					  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 600);
 				}
 
 			  }
 			  else if(strcmp((char *)RxData, "stop") == 0){
 				  printf("stop\n");
+				  HAL_Delay(5000);
 				  state=0;
 				  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET); // STBY = 1
 

@@ -61,8 +61,8 @@ all: main-build
 main-build: ESLab_final_STM2.elf secondary-outputs
 
 # Tool invocations
-ESLab_final_STM2.elf ESLab_final_STM2.map: $(OBJS) $(USER_OBJS) C:\Users\susan\STM32CubeIDE\workspace_1.17.0\ESLab_final_STM2\STM32L475VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "ESLab_final_STM2.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\susan\STM32CubeIDE\workspace_1.17.0\ESLab_final_STM2\STM32L475VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ESLab_final_STM2.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+ESLab_final_STM2.elf ESLab_final_STM2.map: $(OBJS) $(USER_OBJS) C:\Users\susan\git\113-2EmbeddedSystem\ESLab_final_STM2\STM32L475VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "ESLab_final_STM2.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\susan\git\113-2EmbeddedSystem\ESLab_final_STM2\STM32L475VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ESLab_final_STM2.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

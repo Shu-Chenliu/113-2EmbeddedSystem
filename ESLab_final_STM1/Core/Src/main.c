@@ -38,7 +38,7 @@
 #define SSID     "ShuCheniPhone"
 #define PASSWORD "11111111"
 
-uint8_t RemoteIP[] = {172,20,10,4};//{192,168,50,58};//{192,168,50,57};//{172,27,187,63};//{192,168,3,110};
+uint8_t RemoteIP[] = {172,20,10,2};//{192,168,50,58};//{192,168,50,57};//{172,27,187,63};//{192,168,3,110};
 #define RemotePORT	8002
 
 #define WIFI_WRITE_TIMEOUT 10000
@@ -96,14 +96,14 @@ osThreadId_t storingStopTaskHandle;
 const osThreadAttr_t storingStopTask_attributes = {
   .name = "storingStopTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityAboveNormal,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for receiveWIFI */
 osThreadId_t receiveWIFIHandle;
 const osThreadAttr_t receiveWIFI_attributes = {
   .name = "receiveWIFI",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityBelowNormal,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for WIFIsocket */
 osMutexId_t WIFIsocketHandle;
@@ -263,6 +263,8 @@ int main(void)
             {
               printf("> TCP Connection opened successfully.\n");
               Socket = 0;
+              strcpy(TxData, "hello\n");
+              ret = WIFI_SendData(Socket, (const uint8_t *)TxData, strlen(TxData), &Datalen, WIFI_WRITE_TIMEOUT);
               break;
             }
           }
@@ -1042,6 +1044,23 @@ void StartStoringTask(void *argument)
 	  printf("start storing\n");
 	  //scanning
 	  flag=1;
+	  osDelay(100);
+	  if (osMutexAcquire(WIFIsocketHandle, osWaitForever) == osOK) // 最多等 1 秒
+	{
+		  strcpy(TxData, "storing start\n");
+		ret = WIFI_SendData(Socket, (const uint8_t *)TxData, strlen(TxData), &Datalen, WIFI_WRITE_TIMEOUT);
+		osMutexRelease(WIFIsocketHandle);
+
+		if (ret != WIFI_STATUS_OK)
+		{
+			printf("> ERROR : Failed to Send Data, connection closed\n");
+			break;
+		}
+	}
+	else
+	{
+		printf("Socket busy, send skipped.\n");
+	}
 	  while(flag == 1)
 	  {
 		  StartStoringProcess();  // 做一次掃描
@@ -1116,6 +1135,7 @@ void receiveWIFITask(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	  printf("flag:%d\n",flag);
 	  if(Socket != -1&&flag==0)
 	  {
 		if (osMutexAcquire(WIFIsocketHandle, 100) == osOK)  // 最多等 100ms
@@ -1129,8 +1149,9 @@ void receiveWIFITask(void *argument)
 			printf("Received: %s\n", RxData);
 
 			int itemCount = 0;
-			if (sscanf((char *)RxData, "start: %d", &itemCount) == 1)
+			if (sscanf((char *)RxData, "deposit: %d", &itemCount) == 1)
 			{
+				printf("release\n");
 			  expectedItemCount = itemCount;
 			  osSemaphoreRelease(depositStartHandle);
 			}
@@ -1142,7 +1163,7 @@ void receiveWIFITask(void *argument)
 		  osDelay(10);
 		}
 	  }
-	  osDelay(10);
+	  osDelay(100);
   }
   /* USER CODE END receiveWIFITask */
 }
